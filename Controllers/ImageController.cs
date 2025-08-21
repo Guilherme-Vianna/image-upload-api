@@ -6,6 +6,7 @@ namespace image_upload_api.Controllers
     public class ImageUpload
     {
         public IFormFile file { get; set; }
+        public Guid sessionId { get; set; }
     }
 
     [ApiController]
@@ -14,16 +15,15 @@ namespace image_upload_api.Controllers
     {
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] Guid sessionId)
         {
-            var image = await service.GetImages();
-            return Ok(image);
+            return Ok(await service.GetImages(sessionId));
         }
 
         [HttpPost]
         public async Task<IActionResult> UploadImages([FromForm] ImageUpload imageUpload)
         {
-            var result = await service.UploadImage(imageUpload.file);
+            var result = await service.UploadImage(imageUpload.file, imageUpload.sessionId);
             return Ok(result);
         }
     }

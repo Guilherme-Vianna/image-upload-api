@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace image_upload_api.Domain
 {
-    public class DatabaseContext : DbContext
+    public class ImageDatabaseContext : DbContext
     {
-        public DatabaseContext(DbContextOptions<DatabaseContext> options)
+        public ImageDatabaseContext(DbContextOptions<ImageDatabaseContext> options)
             : base(options)
         {
         }

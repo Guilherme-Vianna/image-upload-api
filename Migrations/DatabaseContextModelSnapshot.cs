@@ -10,7 +10,7 @@ using image_upload_api.Domain;
 
 namespace image_upload_api.Migrations
 {
-    [DbContext(typeof(DatabaseContext))]
+    [DbContext(typeof(ImageDatabaseContext))]
     partial class DatabaseContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -30,6 +30,9 @@ namespace image_upload_api.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

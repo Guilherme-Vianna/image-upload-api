@@ -9,11 +9,11 @@ using image_upload_api.Domain;
 
 #nullable disable
 
-namespace image_upload_api.Migrations
+namespace image_upload_api.Migrations.DatabaseContext
 {
     [DbContext(typeof(ImageDatabaseContext))]
-    [Migration("20250818235308_initial_creation")]
-    partial class initial_creation
+    [Migration("20250821003831_add_sessionId")]
+    partial class add_sessionId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,6 +33,9 @@ namespace image_upload_api.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

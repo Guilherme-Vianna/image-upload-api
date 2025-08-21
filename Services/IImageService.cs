@@ -1,8 +1,10 @@
-﻿namespace image_upload_api.Services
+﻿using image_upload_api.Domain.Entities;
+
+namespace image_upload_api.Services
 {
     public interface IImageService
     {
-        public Task<List<string>> GetImages();
-        public Task<string> UploadImage(IFormFile image);
+        public Task<List<Image>> GetImages(Guid sessionId);
+        public Task<Image?> UploadImage(IFormFile image, Guid sessionId);
     }
 }

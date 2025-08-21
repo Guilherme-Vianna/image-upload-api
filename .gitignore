@@ -5,7 +5,10 @@
 *.suo
 *.user
 *.sln.docstates
-
+*.vs
+*.idea
+*.jpg
+*.png
 # Build results
 
 [Dd]ebug/

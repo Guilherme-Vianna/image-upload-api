@@ -7,13 +7,16 @@
 
         }
 
-        public Image(string url, Guid sessionId)
+        public Image(string url, Guid sessionId, string previewUrl)
         {
             Url = url;
             SessionId = sessionId;
+            PreviewUrl = previewUrl;
         }
 
+        public string? PreviewUrl { get; set; }
         public string Url { get; set; }
+        public string? CloudnaryLink { get; set; }
         public Guid SessionId { get; set; }
     }
 }

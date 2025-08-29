@@ -10,5 +10,6 @@ namespace image_upload_api.Domain
         {
         }
         public DbSet<Image> Images { get; set; }
+        public DbSet<ImageProcessingJob> ImageProcessingJobs { get; set; }
     }
 }

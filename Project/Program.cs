@@ -1,18 +1,43 @@
 using image_upload_api.Domain;
 using image_upload_api.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("PostgresDatabase");
+
 builder.Services.AddDbContext<ImageDatabaseContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddHostedService<ImageUploaderService>();
+builder.Services.AddMinio(configureClient => configureClient
+    .WithEndpoint(builder.Configuration.GetValue<string>("MinioDatabase:Hostname") + ":" +
+                  builder.Configuration.GetValue<string>("MinioDatabase:Port"))
+    .WithCredentials(
+        builder.Configuration.GetValue<string>("MinioDatabase:Username"),
+        builder.Configuration.GetValue<string>("MinioDatabase:Password"))
+    .WithSSL(false)
+    .Build());
+
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = null;
+});
+
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = 1_000_000_000;
+    o.MemoryBufferThreshold = 1 * 1024 * 1024;
+    o.BufferBody = true;
+});
 
 var app = builder.Build();
 

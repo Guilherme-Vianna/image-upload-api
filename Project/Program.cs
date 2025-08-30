@@ -34,9 +34,9 @@ builder.WebHost.ConfigureKestrel(options =>
 
 builder.Services.Configure<FormOptions>(o =>
 {
-    o.MultipartBodyLengthLimit = 1_000_000_000;
+    o.MultipartBodyLengthLimit = 5_000_000_000;
     o.MemoryBufferThreshold = 1 * 1024 * 1024;
-    o.BufferBody = true;
+    o.BufferBody = false;
 });
 
 var app = builder.Build();

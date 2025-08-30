@@ -1,10 +1,9 @@
 ﻿using CloudinaryDotNet;
 using image_upload_api.Domain;
-using image_upload_api.Responses;
+using image_upload_api.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 using Minio.DataModel.Args;
-using Image = image_upload_api.Domain.Entities.Image;
 
 namespace image_upload_api.Services
 {
@@ -24,28 +23,7 @@ namespace image_upload_api.Services
             CloudService = cloudinary;
         }
 
-        public async Task<Image?> UploadImageOnCloudService(IFormFile image, Guid sessionId)
-        {
-            throw new NotImplementedException();
-            //await using var stream = image.OpenReadStream();
-
-            //var uploadParams = new ImageUploadParams
-            //{
-            //    File = new FileDescription(image.FileName, stream)
-            //};
-
-            //var response = await CloudService.UploadAsync(uploadParams);
-            //if (response.StatusCode != System.Net.HttpStatusCode.OK) return null;
-
-            //var imageUrl = response.SecureUrl.AbsoluteUri;
-            //var newImage = new Image(imageUrl, sessionId);
-            //await Context.AddAsync(newImage);
-            //await Context.SaveChangesAsync();
-
-            //return newImage;
-        }
-
-        public async Task<Image?> UpdateImageOnMinio(IFormFile image, Guid sessionId)
+        public async Task<ImageData?> UpdateImageOnMinio(IFormFile image, Guid sessionId)
         {
             if (image == null || image.Length == 0)
             {
@@ -53,47 +31,27 @@ namespace image_upload_api.Services
             }
 
             using var client = _minioClientFactory.CreateClient();
+            var originalObjectName = $"{sessionId}/{image.FileName}";
 
-            var putArgs = new PutObjectArgs()
+            var putArgsOriginal = new PutObjectArgs()
                 .WithBucket("images")
-                .WithObject(image.FileName)
+                .WithObject(originalObjectName)
                 .WithStreamData(image.OpenReadStream())
                 .WithObjectSize(image.Length)
                 .WithContentType(image.ContentType);
 
-            var response = await client.PutObjectAsync(putArgs);
+            var response = await client.PutObjectAsync(putArgsOriginal);
 
-            var entity = new Image(response.ObjectName, sessionId, response.ObjectName);
+            var entity = new ImageData(response.ObjectName, sessionId);
             await Context.AddAsync(entity);
             await Context.SaveChangesAsync();
             return entity;
         }
 
-        public async Task<ImageResponse> LoadImageFromMinio(string image)
-        {
-            using var client = _minioClientFactory.CreateClient();
-            using var imageStream = new MemoryStream();
-
-            var getObjectArgs = new GetObjectArgs()
-                .WithBucket("images")
-                .WithObject(image)
-                .WithCallbackStream((stream) =>
-                {
-                    stream.CopyTo(imageStream);
-                });
-
-            await client.GetObjectAsync(getObjectArgs);
-            var file = imageStream.ToArray();
-            var extension = image.Split(".")[1];
-            var response = new ImageResponse(extension, file);
-            return response;
-        }
-
         public async Task<Stream> LoadImageStreamFromMinio(string image)
         {
-            var tempFilePath = Path.GetTempFileName();
             var fileStream = new FileStream(
-                tempFilePath,
+                Path.GetTempFileName(),
                 FileMode.Create,
                 FileAccess.ReadWrite,
                 FileShare.None,
@@ -101,11 +59,6 @@ namespace image_upload_api.Services
                 FileOptions.DeleteOnClose);
 
             var client = _minioClientFactory.CreateClient();
-
-            var statArgs = new StatObjectArgs()
-                .WithBucket("images")
-                .WithObject(image);
-            await client.StatObjectAsync(statArgs);
 
             var getArgs = new GetObjectArgs()
                 .WithBucket("images")
@@ -119,7 +72,7 @@ namespace image_upload_api.Services
             return fileStream;
         }
 
-        public async Task<List<Image>> GetImages(Guid sessionId)
+        public async Task<List<ImageData>> GetImages(Guid sessionId)
         {
             return await Context.Images.Where(x => x.SessionId == sessionId).ToListAsync();
         }

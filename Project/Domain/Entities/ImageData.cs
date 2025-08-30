@@ -1,20 +1,18 @@
 ﻿namespace image_upload_api.Domain.Entities
 {
-    public class Image : Audit
+    public class ImageData : Audit
     {
-        public Image()
+        public ImageData()
         {
 
         }
 
-        public Image(string url, Guid sessionId, string previewUrl)
+        public ImageData(string url, Guid sessionId)
         {
             Url = url;
             SessionId = sessionId;
-            PreviewUrl = previewUrl;
         }
 
-        public string? PreviewUrl { get; set; }
         public string Url { get; set; }
         public string? CloudnaryLink { get; set; }
         public Guid SessionId { get; set; }

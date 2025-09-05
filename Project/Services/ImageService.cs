@@ -48,6 +48,20 @@ namespace image_upload_api.Services
             return entity;
         }
 
+        public async Task<string> ShareImage(Guid sessionId, Guid imageId)
+        {
+            var image = Context.Images.First(x => x.Id == imageId);
+
+            var args = new PresignedGetObjectArgs()
+                .WithBucket("images")
+                .WithObject(image.Url)
+                .WithExpiry(3600);
+
+            using var client = _minioClientFactory.CreateClient();
+            var url = await client.PresignedGetObjectAsync(args);
+            return url;
+        }
+
         public async Task<Stream> LoadImageStreamFromMinio(string image)
         {
             var fileStream = new FileStream(

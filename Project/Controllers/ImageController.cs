@@ -17,6 +17,12 @@ namespace image_upload_api.Controllers
             return Ok(await service.GetImages(sessionId));
         }
 
+        [HttpGet("share")]
+        public async Task<IActionResult> Get([FromQuery] Guid sessionId, [FromQuery] Guid imageId)
+        {
+            return Ok(await service.ShareImage(sessionId, imageId));
+        }
+
         [HttpGet("load")]
         public async Task<IActionResult> GetImage([FromQuery] string imageName)
         {

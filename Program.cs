@@ -12,11 +12,13 @@ builder.Services.AddDbContext<ImageDatabaseContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddHostedService<ImageUploaderService>();
 
-var minioHost = builder.Configuration.GetValue<string>("MinioDatabase:Hostname");
-var minioPort = builder.Configuration.GetValue<string>("MinioDatabase:Port");
-var minioSSL = builder.Configuration.GetValue<string>("MinioDatabase:SSL");
-var minioUser = builder.Configuration.GetValue<string>("MinioDatabase:Username");
-var minioPass = builder.Configuration.GetValue<string>("MinioDatabase:Password");
+builder.Configuration.AddEnvironmentVariables();
+
+var minioHost = builder.Configuration["MINIO_HOST"];
+var minioPort = builder.Configuration["MINIO_PORT"];
+var minioSSL = builder.Configuration["MINIO_SSL"];
+var minioUser = builder.Configuration["MINIO_USERNAME"];
+var minioPass = builder.Configuration["MINIO_PASSWORD"];
 
 builder.Services.AddMinio(configureClient => configureClient
     .WithEndpoint(minioHost, int.Parse(minioPort))

@@ -6,13 +6,11 @@ using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("PostgresDatabase");
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddDbContext<ImageDatabaseContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(builder.Configuration["DB_CONNECTION"]));
 builder.Services.AddHostedService<ImageUploaderService>();
-
-builder.Configuration.AddEnvironmentVariables();
 
 var minioHost = builder.Configuration["MINIO_HOST"];
 var minioPort = builder.Configuration["MINIO_PORT"];

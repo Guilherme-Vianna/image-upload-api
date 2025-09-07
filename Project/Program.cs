@@ -11,13 +11,17 @@ var connectionString = builder.Configuration.GetConnectionString("PostgresDataba
 builder.Services.AddDbContext<ImageDatabaseContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddHostedService<ImageUploaderService>();
+
+var minioHost = builder.Configuration.GetValue<string>("MinioDatabase:Hostname");
+var minioPort = builder.Configuration.GetValue<int>("MinioDatabase:Port");
+var minioSSL = builder.Configuration.GetValue<bool>("MinioDatabase:SSL");
+var minioUser = builder.Configuration.GetValue<string>("MinioDatabase:Username");
+var minioPass = builder.Configuration.GetValue<string>("MinioDatabase:Password");
+
 builder.Services.AddMinio(configureClient => configureClient
-    .WithEndpoint(builder.Configuration.GetValue<string>("MinioDatabase:Hostname") + ":" +
-                  builder.Configuration.GetValue<string>("MinioDatabase:Port"))
-    .WithCredentials(
-        builder.Configuration.GetValue<string>("MinioDatabase:Username"),
-        builder.Configuration.GetValue<string>("MinioDatabase:Password"))
-    .WithSSL(false)
+    .WithEndpoint(minioHost, minioPort)
+    .WithCredentials(minioUser, minioPass)
+    .WithSSL(minioSSL)
     .Build());
 
 builder.Services.AddScoped<IImageService, ImageService>();

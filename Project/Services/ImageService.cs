@@ -12,15 +12,21 @@ namespace image_upload_api.Services
         private Cloudinary CloudService { get; set; }
         private ImageDatabaseContext Context { get; set; }
         private readonly IMinioClientFactory _minioClientFactory;
+        private const string BucketName = "images";
 
         public ImageService(IConfiguration configuration, ImageDatabaseContext context, IMinioClientFactory minioClientFactory)
         {
-            this._minioClientFactory = minioClientFactory;
+            _minioClientFactory = minioClientFactory;
             Context = context;
-            var url = configuration.GetSection("ExternalApi").GetValue<string>("ImageCloud:Url");
-            var cloudinary = new Cloudinary(url);
-            cloudinary.Api.Secure = true;
-            CloudService = cloudinary;
+        }
+
+        private async Task EnsureBucketExistsAsync(IMinioClient client)
+        {
+            bool found = await client.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+            if (!found)
+            {
+                await client.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
+            }
         }
 
         public async Task<ImageData?> UpdateImageOnMinio(IFormFile image, Guid sessionId)
@@ -31,18 +37,20 @@ namespace image_upload_api.Services
             }
 
             using var client = _minioClientFactory.CreateClient();
+            await EnsureBucketExistsAsync(client);
+
             var originalObjectName = $"{sessionId}/{image.FileName}";
 
             var putArgsOriginal = new PutObjectArgs()
-                .WithBucket("images")
+                .WithBucket(BucketName)
                 .WithObject(originalObjectName)
                 .WithStreamData(image.OpenReadStream())
                 .WithObjectSize(image.Length)
                 .WithContentType(image.ContentType);
 
-            var response = await client.PutObjectAsync(putArgsOriginal);
+            await client.PutObjectAsync(putArgsOriginal);
 
-            var entity = new ImageData(response.ObjectName, sessionId);
+            var entity = new ImageData(originalObjectName, sessionId);
             await Context.AddAsync(entity);
             await Context.SaveChangesAsync();
             return entity;
@@ -50,14 +58,16 @@ namespace image_upload_api.Services
 
         public async Task<string> ShareImage(Guid sessionId, Guid imageId)
         {
-            var image = Context.Images.First(x => x.Id == imageId);
+            var image = await Context.Images.FirstAsync(x => x.Id == imageId);
+
+            using var client = _minioClientFactory.CreateClient();
+            await EnsureBucketExistsAsync(client);
 
             var args = new PresignedGetObjectArgs()
-                .WithBucket("images")
+                .WithBucket(BucketName)
                 .WithObject(image.Url)
                 .WithExpiry(3600);
 
-            using var client = _minioClientFactory.CreateClient();
             var url = await client.PresignedGetObjectAsync(args);
             return url;
         }
@@ -72,17 +82,17 @@ namespace image_upload_api.Services
                 4096,
                 FileOptions.DeleteOnClose);
 
-            var client = _minioClientFactory.CreateClient();
+            using var client = _minioClientFactory.CreateClient();
+            await EnsureBucketExistsAsync(client);
 
             var getArgs = new GetObjectArgs()
-                .WithBucket("images")
+                .WithBucket(BucketName)
                 .WithObject(image)
                 .WithCallbackStream(stream => stream.CopyTo(fileStream));
 
             await client.GetObjectAsync(getArgs);
 
             fileStream.Position = 0;
-
             return fileStream;
         }
 

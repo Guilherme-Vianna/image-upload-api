@@ -14,14 +14,14 @@ builder.Services.AddHostedService<ImageUploaderService>();
 
 var minioHost = builder.Configuration.GetValue<string>("MinioDatabase:Hostname");
 var minioPort = builder.Configuration.GetValue<string>("MinioDatabase:Port");
-var minioSSL = builder.Configuration.GetValue<bool>("MinioDatabase:SSL");
+var minioSSL = builder.Configuration.GetValue<string>("MinioDatabase:SSL");
 var minioUser = builder.Configuration.GetValue<string>("MinioDatabase:Username");
 var minioPass = builder.Configuration.GetValue<string>("MinioDatabase:Password");
 
 builder.Services.AddMinio(configureClient => configureClient
     .WithEndpoint(minioHost, int.Parse(minioPort))
     .WithCredentials(minioUser, minioPass)
-    .WithSSL(minioSSL)
+    .WithSSL(bool.Parse(minioSSL))
     .Build());
 
 builder.Services.AddScoped<IImageService, ImageService>();
